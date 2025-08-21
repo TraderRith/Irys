@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Runner → Irys Devnet</title>
+<style>
+  :root{
+    --bg:#07090f;
+    --panel:#0b1220;
+    --accent:#00f0ff;
+    --accent-2:#7bff7b;
+    --danger:#ff5a5a;
+    --gold:#ffd54a;
+    --text:#e7fbff;
+  }
+  *{ box-sizing:border-box }
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial }
+  .wrap{ width:min(420px,96vw); margin:18px auto; position:relative; }
+  canvas{
+    width:100%; height:auto; display:block;
+    background: radial-gradient(120% 80% at 50% -10%, #0d1a2b 0%, #06080d 60%, #05060a 100%);
+    border-radius:14px; box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    max-height:80vh;
+  }
+  .hud{ position:absolute; left:12px; top:12px; padding:6px 12px; border-radius:999px; background:rgba(0,0,0,.35); font-weight:800; letter-spacing:.4px }
+  .controls{ position:absolute; right:12px; top:12px; display:flex; gap:8px; }
+  .btn{
+    background:var(--accent); color:#001; border:0; padding:8px 12px; border-radius:10px; font-weight:900; cursor:pointer;
+    box-shadow:0 10px 28px rgba(0,255,255,.18); transition: transform .06s ease;
+  }
+  .btn:active{ transform: translateY(1px) scale(.99) }
+  .btn.alt{ background:#1b2332; color:#bfefff; border:1px solid #24314a; box-shadow:none }
+  .panel{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .card{
+    width:min(92%, 360px); border-radius:14px; padding:18px;
+    background: linear-gradient(180deg,#0c1524 0%, #08121e 100%);
+    box-shadow: 0 20px 60px rgba(0,0,0,.6); text-align:center;
+  }
+  .title{ color:var(--accent); font-size:22px; font-weight:1000; letter-spacing:.25px; margin:0 0 6px }
+  .muted{ color:#a6d9e4; font-size:13px; line-height:1.35 }
+  .small{ color:#8fb6bf; font-size:12px; margin-top:8px }
+  .status{ text-align:left; font-size:12px; color:#ffe; background:#0a1425; border:1px solid #12213a; padding:10px; border-radius:8px; margin-top:10px; max-height:130px; overflow:auto; word-break: break-all }
+  #goOverlay .card .title{ color:#ffe082 }
+  .link{ color:var(--gold); text-decoration:none; font-weight:800 }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="cv" width="400" height="600"></canvas>
+  <div id="hud" class="hud">Score: 0 | Coins: 0 | High: 0</div>
+  <div class="controls">
+    <button id="musicBtn" class="btn">Pause Music</button>
+    <button id="pauseBtn" class="btn alt">Pause</button>
+  </div>
+
+  <div id="startOverlay" class="panel">
+    <div class="card">
+      <h1 class="title">Runner → Irys Devnet</h1>
+      <p class="muted">Swipe left/right (or ← →) to change lanes. Swipe up (or ↑) to jump. Avoid obstacles, collect coins.</p>
+      <p class="small">Scores will be uploaded to <strong>Irys Devnet</strong> using your connected wallet (Devnet faucet funds are used automatically).</p>
+      <div style="margin-top:10px; display:flex; gap:10px; justify-content:center">
+        <button id="startBtn" class="btn">Start Game</button>
+        <button id="muteStartBtn" class="btn alt">Start (Muted)</button>
+      </div>
+      <div id="startStatus" class="status">Tap Start to connect wallet & init Irys.</div>
+    </div>
+  </div>
+
+  <div id="goOverlay" class="panel" style="display:none">
+    <div class="card">
+      <div class="title" id="goTitle">Game Over</div>
+      <div class="muted" id="goSub">Score: 0 | Coins: 0</div>
+      <div class="status" id="txInfo">Uploading to Irys Devnet…</div>
+      <div style="margin-top:10px">
+        <button id="retryBtn" class="btn">Play Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="bgm" preload="auto" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/10/03/audio_b2c72236d7.mp3?filename=cyberpunk-moonlight-sonata-122199.mp3" type="audio/mpeg">
+</audio>
+
+<!-- === New: Irys Web Uploader (wallet-based) via ESM modules === -->
+<script type="module">
+import { WebUploader } from "https://cdn.jsdelivr.net/npm/@irys/web-upload/+esm";
+import { WebEthereum } from "https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum/+esm";
+import { EthereumEthersv5 } from "https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum-ethers-v5/+esm";
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/+esm";
+
+/* Elements */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const hud = document.getElementById('hud');
+const startOverlay = document.getElementById('startOverlay');
+const goOverlay = document.getElementById('goOverlay');
+const startBtn = document.getElementById('startBtn');
+const muteStartBtn = document.getElementById('muteStartBtn');
+const startStatus = document.getElementById('startStatus');
+const goTitle = document.getElementById('goTitle');
+const goSub = document.getElementById('goSub');
+const txInfo = document.getElementById('txInfo');
+const retryBtn = document.getElementById('retryBtn');
+const musicBtn = document.getElementById('musicBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const bgm = document.getElementById('bgm');
+
+/* Sounds */
+const sCoin  = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
+const sJump  = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+const sCrash = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_crash.ogg");
+// basic audio error logging (optional)
+[sCoin, sJump, sCrash, bgm].forEach(a => a.addEventListener('error', e => console.warn('Audio error:', e)));
+
+/* Game state */
+const W = cv.width, H = cv.height;
+const lanes = 3, laneW = W/lanes, groundY = H - 100;
+
+let score = 0, coins = 0, high = 0;
+let speed = 6;
+let running = false, gameOver = false, musicOn = true, paused = false;
+
+const player = {
+  lane: 1,
+  x: laneX(1),
+  y: groundY,
+  w: 50, h: 50,
+  jumping: false,
+  vy: 0,
+  targetX: laneX(1)
+};
+
+const obstacles = [];
+const coinItems = [];
+let tObs = 0, tCoin = 0;
+
+/* Irys instance (new API) */
+let irys = null;
+
+/* Helpers */
+function laneX(l){ return l*laneW + laneW/2 - 25; }
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function aabb(a,b){ return (a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y); }
+function setHUD(){ hud.textContent = `Score: ${score} | Coins: ${coins} | High: ${high}`; }
+
+/* Spawning */
+function spawnObstacle(){
+  const lane = rand(0, lanes-1);
+  const s = rand(46,64);
+  obstacles.push({ lane, x: laneX(lane), y: -s-10, w: s, h: s });
+}
+function spawnCoin(){
+  const lane = rand(0, lanes-1);
+  coinItems.push({ lane, x: laneX(lane)+5, y: -28, w:28, h:28, spin: Math.random()*360 });
+}
+
+/* Reset */
+function resetGame(){
+  score=0; coins=0; speed=6; running=true; gameOver=false; paused=false;
+  obstacles.length=0; coinItems.length=0;
+  tObs=0; tCoin=0;
+  player.lane=1; player.x=laneX(1); player.y=groundY; player.jumping=false; player.vy=0; player.targetX=player.x;
+  goOverlay.style.display='none';
+  startOverlay.style.display='none';
+  if (musicOn) { bgm.play().catch(()=>{}); }
+  setHUD();
+}
+
+/* Update */
+function update(){
+  if (!running || paused) return;
+
+  score++;
+  if (score % 500 === 0) speed++;
+
+  // smooth lane switch
+  player.x += (player.targetX - player.x) * 0.22;
+
+  // jump physics
+  if (player.jumping){
+    player.y += player.vy;
+    player.vy += 1.15;
+    if (player.y >= groundY){ player.y=groundY; player.jumping=false; }
+  }
+
+  // move
+  obstacles.forEach(o => o.y += speed * (1 + score/22000));
+  coinItems.forEach(c => { c.y += speed; c.spin += 12; });
+
+  // spawn
+  if (++tObs  > Math.max(34, 64 - Math.floor(score/1800))) { spawnObstacle(); tObs=0; }
+  if (++tCoin > 96) { spawnCoin(); tCoin=0; }
+
+  // collisions
+  for (let i=obstacles.length-1;i>=0;i--){
+    const o = obstacles[i];
+    if (aabb(o, player)){
+      sCrash.play();
+      running = false; gameOver = true; paused = false;
+      if (score > high) high = score;
+      setTimeout(showGameOver, 140);
+      break;
+    }
+    if (o.y > H+80) obstacles.splice(i,1);
+  }
+
+  for (let i=coinItems.length-1;i>=0;i--){
+    const c = coinItems[i];
+    if (aabb(c, player)){ coins++; sCoin.play(); coinItems.splice(i,1); }
+    else if (c.y>H+60) coinItems.splice(i,1);
+  }
+
+  setHUD();
+}
+
+/* Draw */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // lanes
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  for (let i=1;i<lanes;i++){
+    ctx.beginPath(); ctx.moveTo(i*laneW,0); ctx.lineTo(i*laneW,H); ctx.stroke();
+  }
+
+  // speed lines
+  ctx.strokeStyle = "rgba(0,255,255,0.05)";
+  for (let i=0;i<8;i++){
+    ctx.beginPath();
+    const x = ((i/8)*W + ((score*0.25)%26)); ctx.moveTo(x,0); ctx.lineTo(x+4,H); ctx.stroke();
+  }
+
+  // coins
+  for (const c of coinItems){
+    ctx.save(); ctx.translate(c.x+14, c.y+14); ctx.rotate((c.spin||0)*Math.PI/180);
+    ctx.fillStyle = "rgba(255,213,74,1)";
+    ctx.beginPath(); ctx.arc(0,0,13,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // obstacles
+  ctx.fillStyle = "rgba(255,90,90,0.95)";
+  for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+
+  // player
+  ctx.save();
+  const px = player.x+25, py = player.y+25;
+  ctx.shadowColor = "rgba(0,255,170,0.6)";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "rgba(123,255,123,1)";
+  ctx.beginPath(); ctx.arc(px, py, 25, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // paused veil
+  if (paused && !gameOver){
+    ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = "#cfe"; ctx.font = "bold 20px system-ui"; ctx.fillText("Paused", W/2-36, H/2);
+  }
+}
+
+/* Loop */
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+/* Controls: keyboard */
+document.addEventListener('keydown', e=>{
+  if (gameOver) return;
+  if (e.key === "ArrowLeft" && player.lane>0){ player.lane--; player.targetX = laneX(player.lane); }
+  if (e.key === "ArrowRight" && player.lane<lanes-1){ player.lane++; player.targetX = laneX(player.lane); }
+  if (e.key === "ArrowUp" && !player.jumping){ player.jumping=true; player.vy=-15; sJump.play(); }
+  if (e.key === "p" || e.key === "P"){ togglePause(); }
+});
+
+/* Controls: swipe */
+let sx=0, sy=0;
+cv.addEventListener('touchstart', e=>{
+  const t=e.touches[0], r=cv.getBoundingClientRect();
+  sx=t.clientX-r.left; sy=t.clientY-r.top;
+},{passive:true});
+cv.addEventListener('touchend', e=>{
+  if (gameOver) return;
+  const t=e.changedTouches[0], r=cv.getBoundingClientRect();
+  const ex=t.clientX-r.left, ey=t.clientY-r.top;
+  const dx=ex-sx, dy=ey-sy;
+  if (Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>40){
+    if (dx>0 && player.lane<lanes-1){ player.lane++; player.targetX=laneX(player.lane); }
+    if (dx<0 && player.lane>0){ player.lane--; player.targetX=laneX(player.lane); }
+  }else if(dy<-40 && !player.jumping){
+    player.jumping=true; player.vy=-15; sJump.play();
+  }
+},{passive:true});
+
+/* UI: music + pause */
+musicBtn.addEventListener('click', ()=>{
+  musicOn = !musicOn;
+  if (musicOn){ bgm.play().catch(()=>{}); musicBtn.textContent="Pause Music"; }
+  else { bgm.pause(); musicBtn.textContent="Play Music"; }
+});
+pauseBtn.addEventListener('click', togglePause);
+function togglePause(){ if (gameOver) return; paused = !paused; }
+
+/* Start buttons — ensure Irys first */
+startBtn.addEventListener('click', async ()=>{
+  await ensureIrys();
+  musicOn=true;
+  bgm.play().catch(()=>{});
+  resetGame();
+});
+muteStartBtn.addEventListener('click', async ()=>{
+  await ensureIrys();
+  musicOn=false;
+  bgm.pause();
+  resetGame();
+});
+retryBtn.addEventListener('click', ()=>{ resetGame(); });
+
+/* Irys: create instance (web uploader, Devnet) */
+async function ensureIrys(){
+  try{
+    if (irys) return irys;
+
+    if (!window.ethereum) {
+      startStatus.innerHTML = "No wallet found. Install MetaMask or another EVM wallet.";
+      throw new Error("No injected wallet");
+    }
+
+    startStatus.textContent = "Requesting wallet access…";
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+    // Any working Sepolia RPC is fine for Devnet; customize if desired.
+    const RPC_URL = "https://rpc.sepolia.org";
+
+    startStatus.textContent = "Connecting to Irys Devnet…";
+    irys = await WebUploader(WebEthereum)
+      .withProvider(EthereumEthersv5(provider))
+      .withRpc(RPC_URL)
+      .devnet();
+
+    startStatus.textContent = "Irys ready ✓ — scores will upload on Game Over.";
+    return irys;
+  }catch(err){
+    console.error("Irys init error:", err);
+    startStatus.textContent = "Irys init failed: " + (err.message||String(err)) + ". You can still play; upload may fail.";
+    irys = null;
+    return null;
+  }
+}
+
+/* Game over + upload (auto-fund if needed) */
+function showGameOver(){
+  goOverlay.style.display='flex';
+  goTitle.textContent = "Game Over";
+  goSub.textContent = `Score: ${score} | Coins: ${coins}`;
+
+  // Always save locally too (fallback)
+  const localScores = JSON.parse(localStorage.getItem('runner-scores') || '[]');
+  localScores.push({score, coins, date: new Date().toISOString()});
+  localStorage.setItem('runner-scores', JSON.stringify(localScores));
+
+  if (irys) {
+    txInfo.textContent = "Uploading to Irys Devnet…";
+    uploadScore({score, coins})
+      .then(msg => { txInfo.innerHTML = msg; })
+      .catch(err => { txInfo.textContent = "Upload failed: " + (err.message || String(err)); });
+  } else {
+    txInfo.textContent = "Irys uploader not ready. Score was not uploaded.";
+  }
+}
+
+async function uploadScore({score, coins}){
+  const payload = {
+    game: "runner-irys-devnet",
+    player: "guest_" + Math.floor(Math.random()*90000+10000),
+    score,
+    coins,
+    ts: Date.now()
+  };
+  const data = JSON.stringify(payload);
+  const dataBytes = new TextEncoder().encode(data);
+
+  const tryUpload = async () => {
+    const receipt = await irys.upload(data, {
+      tags: [
+        { name:"App-Name", value:"Runner-Irys-Devnet" },
+        { name:"Content-Type", value:"application/json" }
+      ]
+    });
+    return receipt;
+  };
+
+  try {
+    const receipt = await tryUpload();
+    const url = `https://gateway.irys.xyz/${receipt.id}`;
+    return `Uploaded ✅ <a class="link" href="${url}" target="_blank" rel="noopener">${receipt.id}</a>`;
+  } catch (err) {
+    const msg = (err?.message || "").toLowerCase();
+    if (msg.includes("fund") || msg.includes("balance") || msg.includes("insufficient")) {
+      try {
+        const price = await irys.getPrice(dataBytes.length);
+        const buffered = Math.ceil(Number(price) * 1.1);
+        txInfo.textContent = "Funding devnet node…";
+        await irys.fund(buffered);
+        const receipt2 = await tryUpload();
+        const url2 = `https://gateway.irys.xyz/${receipt2.id}`;
+        return `Uploaded ✅ <a class="link" href="${url2}" target="_blank" rel="noopener">${receipt2.id}</a>`;
+      } catch (fundErr) {
+        console.error("Funding/upload retry failed:", fundErr);
+        throw fundErr;
+      }
+    }
+    console.error("Upload error:", err);
+    throw err;
+  }
+}
+</script>
+</body>
+</html>
