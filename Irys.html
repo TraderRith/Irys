@@ -3,78 +3,246 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Runner → Irys Devnet</title>
+<title>Runner Deluxe → Irys Devnet</title>
 <style>
-  :root{
-    --bg:#07090f;
-    --panel:#0b1220;
-    --accent:#00f0ff;
-    --accent-2:#7bff7b;
-    --danger:#ff5a5a;
-    --gold:#ffd54a;
-    --text:#e7fbff;
+  /* --- UI/UX & Visual Enhancements --- */
+  :root {
+    --bg: #030a13; /* Darker background */
+    --panel: #0d1a2b; /* Slightly lighter panel */
+    --accent: #4ade80; /* Brighter, more vibrant accent green */
+    --accent-glow: #4ade8055; /* For glow effects */
+    --accent-2: #24a1ff; /* New accent blue for coins */
+    --danger: #ef4444; /* Standard danger red */
+    --gold: #fde047; /* Brighter gold for coins */
+    --text: #e2e8f0; /* Softer white text */
+    --border: #1a2e45; /* Subtle border for elements */
+    --shadow-light: rgba(0,0,0,0.3);
+    --shadow-dark: rgba(0,0,0,0.7);
   }
-  *{ box-sizing:border-box }
-  html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial }
-  .wrap{ width:min(420px,96vw); margin:18px auto; position:relative; }
-  canvas{
-    width:100%; height:auto; display:block;
-    background: radial-gradient(120% 80% at 50% -10%, #0d1a2b 0%, #06080d 60%, #05060a 100%);
-    border-radius:14px; box-shadow: 0 18px 60px rgba(0,0,0,.55);
-    max-height:80vh;
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: 'Press Start 2P', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+
+  /* Google Font Import (for pixelated retro look) */
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  .wrap {
+    width: min(420px, 96vw);
+    margin: 18px auto;
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden; /* Ensures elements don't spill out */
+    box-shadow: 0 25px 80px var(--shadow-dark), 0 5px 15px var(--shadow-light);
   }
-  .hud{ position:absolute; left:12px; top:12px; padding:6px 12px; border-radius:999px; background:rgba(0,0,0,.35); font-weight:800; letter-spacing:.4px }
-  .controls{ position:absolute; right:12px; top:12px; display:flex; gap:8px; }
-  .btn{
-    background:var(--accent); color:#001; border:0; padding:8px 12px; border-radius:10px; font-weight:900; cursor:pointer;
-    box-shadow:0 10px 28px rgba(0,255,255,.18); transition: transform .06s ease;
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: linear-gradient(180deg, #1f2a40 0%, #030a13 100%); /* Deeper gradient */
+    border-radius: 14px;
+    max-height: 80vh;
+    border: 2px solid var(--border); /* Subtle frame */
   }
-  .btn:active{ transform: translateY(1px) scale(.99) }
-  .btn.alt{ background:#1b2332; color:#bfefff; border:1px solid #24314a; box-shadow:none }
-  .panel{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
-  .card{
-    width:min(92%, 360px); border-radius:14px; padding:18px;
-    background: linear-gradient(180deg,#0c1524 0%, #08121e 100%);
-    box-shadow: 0 20px 60px rgba(0,0,0,.6); text-align:center;
+  .hud {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.45);
+    font-weight: 800;
+    letter-spacing: .5px;
+    font-size: 0.9em;
+    color: var(--accent);
+    box-shadow: inset 0 0 8px rgba(0,240,255,0.2);
+    text-shadow: 0 0 5px rgba(0,240,255,0.4);
   }
-  .title{ color:var(--accent); font-size:22px; font-weight:1000; letter-spacing:.25px; margin:0 0 6px }
-  .muted{ color:#a6d9e4; font-size:13px; line-height:1.35 }
-  .small{ color:#8fb6bf; font-size:12px; margin-top:8px }
-  .status{ text-align:left; font-size:12px; color:#ffe; background:#0a1425; border:1px solid #12213a; padding:10px; border-radius:8px; margin-top:10px; max-height:130px; overflow:auto; word-break: break-all }
-  #goOverlay .card .title{ color:#ffe082 }
-  .link{ color:var(--gold); text-decoration:none; font-weight:800 }
+  .controls {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    background: var(--accent);
+    color: #0d1a2b; /* Darker text for contrast */
+    border: 0;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 12px 30px var(--accent-glow);
+    transition: transform .08s ease, box-shadow .08s ease;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Press Start 2P', cursive;
+    outline: none;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px var(--accent-glow);
+  }
+  .btn:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 5px 15px var(--accent-glow);
+  }
+  .btn.alt {
+    background: var(--panel);
+    color: var(--text);
+    border: 2px solid var(--border);
+    box-shadow: inset 0 0 10px rgba(45,78,124,0.3);
+  }
+  .btn.alt:hover {
+    background: #15253b;
+    border-color: #314a6e;
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 15px rgba(45,78,124,0.4);
+  }
+  .btn.alt:active {
+    background: #0a131f;
+    transform: translateY(1px) scale(0.99);
+  }
+
+  .panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7); /* More opaque overlay */
+    backdrop-filter: blur(5px); /* Subtle blur effect */
+    z-index: 10;
+  }
+  .card {
+    width: min(92%, 380px); /* Slightly wider card */
+    border-radius: 18px; /* More rounded corners */
+    padding: 24px; /* More padding */
+    background: linear-gradient(180deg, var(--panel) 0%, #08121e 100%);
+    box-shadow: 0 25px 80px var(--shadow-dark), 0 5px 15px var(--shadow-light), inset 0 0 10px var(--border);
+    text-align: center;
+    border: 2px solid var(--border);
+  }
+  .title {
+    color: var(--accent);
+    font-size: 2.2em; /* Larger title */
+    font-weight: 1000;
+    letter-spacing: 0.8px;
+    margin: 0 0 10px;
+    text-shadow: 0 0 10px var(--accent-glow);
+    font-family: 'Press Start 2P', cursive;
+  }
+  .muted {
+    color: #94a3b8; /* Softer muted text */
+    font-size: 1.05em; /* Slightly larger muted text */
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+  .small {
+    color: #64748b; /* Even softer small text */
+    font-size: 0.85em;
+    margin-top: 12px;
+    line-height: 1.4;
+  }
+  .status {
+    text-align: left;
+    font-size: 0.8em;
+    color: #bfdbfe; /* Lighter blue for status */
+    background: #0d1a2b; /* Matches panel background */
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 15px;
+    max-height: 180px; /* Taller status box */
+    overflow: auto;
+    word-break: break-all;
+    font-family: monospace; /* Monospace for logs */
+  }
+  .link {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 800;
+    text-shadow: 0 0 3px rgba(253,224,71,0.5);
+  }
+  .link:hover {
+    text-decoration: underline;
+  }
+  #leaderboard {
+    margin-top: 18px; /* More space */
+    font-size: 0.9em;
+    color: var(--text);
+    text-align: left;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    border: 1px dashed var(--border); /* Dashed border for leaderboard */
+    border-radius: 10px;
+  }
+  .highlight {
+    color: var(--accent-2); /* Blue highlight for user's score */
+    font-weight: 900;
+    text-shadow: 0 0 5px rgba(36,161,255,0.4);
+  }
+  .score-item {
+    padding: 4px 0;
+    border-bottom: 1px dotted rgba(255,255,255,0.08);
+  }
+  .score-item:last-child {
+    border-bottom: none;
+  }
+  /* New styles for wallet info */
+  #walletInfo {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #0d1a2b;
+    border: 1px solid var(--border);
+    color: #bfdbfe;
+    font-size: 0.8em;
+    text-align: left;
+    word-break: break-all;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <canvas id="cv" width="400" height="600"></canvas>
-  <div id="hud" class="hud">Score: 0 | Coins: 0 | High: 0</div>
+  <div id="hud" class="hud">SCORE: 0 | COINS: 0 | HIGH: 0</div>
+
   <div class="controls">
-    <button id="musicBtn" class="btn">Pause Music</button>
+    <button id="musicBtn" class="btn alt">Pause Music</button>
     <button id="pauseBtn" class="btn alt">Pause</button>
   </div>
 
   <div id="startOverlay" class="panel">
     <div class="card">
-      <h1 class="title">Runner → Irys Devnet</h1>
-      <p class="muted">Swipe left/right (or ← →) to change lanes. Swipe up (or ↑) to jump. Avoid obstacles, collect coins.</p>
-      <p class="small">Scores will be uploaded to <strong>Irys Devnet</strong> using your connected wallet (Devnet faucet funds are used automatically).</p>
-      <div style="margin-top:10px; display:flex; gap:10px; justify-content:center">
-        <button id="startBtn" class="btn">Start Game</button>
-        <button id="muteStartBtn" class="btn alt">Start (Muted)</button>
+      <h1 class="title">Runner Deluxe</h1>
+      <p class="muted">Dash, jump, and collect coins in this fast-paced adventure!</p>
+      <p class="small">Use &larr;&nbsp;&rarr;&nbsp;&uarr; arrow keys or swipe on mobile.<br>Upload scores to Irys Devnet for the leaderboard.</p>
+      <div id="walletInfo">
+        Wallet: Not Connected<br>
+        Balance: N/A
       </div>
-      <div id="startStatus" class="status">Tap Start to connect wallet & init Irys.</div>
+      <div style="margin-top:20px; display:flex; gap:12px; justify-content:center">
+        <button id="connectWalletBtn" class="btn">Connect Wallet</button>
+        <button id="startBtn" class="btn" style="display:none;">Play (0.001 ETH)</button>
+        <button id="muteStartBtn" class="btn alt" style="display:none;">Play Muted (0.001 ETH)</button>
+      </div>
+      <div id="startStatus" class="status">Connect your wallet to play.</div>
     </div>
   </div>
 
   <div id="goOverlay" class="panel" style="display:none">
     <div class="card">
       <div class="title" id="goTitle">Game Over</div>
-      <div class="muted" id="goSub">Score: 0 | Coins: 0</div>
-      <div class="status" id="txInfo">Uploading to Irys Devnet…</div>
-      <div style="margin-top:10px">
+      <div class="muted" id="goSub">SCORE: 0 | COINS: 0</div>
+      <div class="status" id="txInfo"></div>
+      <div style="margin-top:20px; display:flex; gap:12px; justify-content:center">
         <button id="retryBtn" class="btn">Play Again</button>
+        <button id="uploadBtn" class="btn alt">Upload Score</button>
       </div>
+      <div id="leaderboard" class="status" style="margin-top:18px">Leaderboard will appear here.</div>
     </div>
   </div>
 </div>
@@ -82,20 +250,33 @@
 <audio id="bgm" preload="auto" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/10/03/audio_b2c72236d7.mp3?filename=cyberpunk-moonlight-sonata-122199.mp3" type="audio/mpeg">
 </audio>
+<audio id="sCoin" preload="auto"><source src="https://actions.google.com/sounds/v1/cartoon/pop.ogg" type="audio/ogg"></audio>
+<audio id="sJump" preload="auto"><source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg"></audio>
+<audio id="sCrash" preload="auto"><source src="https://actions.google.com/sounds/v1/cartoon/clang_and_crash.ogg" type="audio/ogg"></audio>
 
-<!-- === New: Irys Web Uploader (wallet-based) via ESM modules === -->
 <script type="module">
-import { WebUploader } from "https://cdn.jsdelivr.net/npm/@irys/web-upload/+esm";
-import { WebEthereum } from "https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum/+esm";
-import { EthereumEthersv5 } from "https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum-ethers-v5/+esm";
-import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/+esm";
+/* ========== CONFIG ========== */
+/* This is a temporary test key for your convenience. Please do not use a real key.
+   You must also have run `irys fund` in your Termux a few times for this to work.
+*/
+const TEST_PRIVATE_KEY = ""; // Removed hardcoded key for wallet integration
+/* Fallback RPC (used if TEST_PRIVATE_KEY is set) */
+const FALLBACK_RPC = "https://eth-sepolia.g.alchemy.com/v2/wH2gS5otFtoD4nGhmLTOP";
 
-/* Elements */
+const GAME_ENTRY_FEE_ETH = 0.001; // 0.001 Sepolia ETH to play a game
+
+/* ========== MODULE PLACEHOLDERS (will be lazy-loaded) ========== */
+let WebUploader = null, WebEthereum = null, EthereumEthersv5 = null, ethers = null, modulesLoaded = false;
+let provider = null; // New: Global provider instance
+let signer = null; // New: Global signer instance
+
+/* ========== ELEMENTS ========== */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const hud = document.getElementById('hud');
 const startOverlay = document.getElementById('startOverlay');
 const goOverlay = document.getElementById('goOverlay');
+const connectWalletBtn = document.getElementById('connectWalletBtn'); // New button
 const startBtn = document.getElementById('startBtn');
 const muteStartBtn = document.getElementById('muteStartBtn');
 const startStatus = document.getElementById('startStatus');
@@ -103,52 +284,87 @@ const goTitle = document.getElementById('goTitle');
 const goSub = document.getElementById('goSub');
 const txInfo = document.getElementById('txInfo');
 const retryBtn = document.getElementById('retryBtn');
+const uploadBtn = document.getElementById('uploadBtn');
 const musicBtn = document.getElementById('musicBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const bgm = document.getElementById('bgm');
+const sCoin  = document.getElementById('sCoin');
+const sJump  = document.getElementById('sJump');
+const sCrash = document.getElementById('sCrash');
+const leaderboardEl = document.getElementById('leaderboard');
+const walletInfo = document.getElementById('walletInfo'); // New element
 
-/* Sounds */
-const sCoin  = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-const sJump  = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
-const sCrash = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_crash.ogg");
-// basic audio error logging (optional)
-[sCoin, sJump, sCrash, bgm].forEach(a => a.addEventListener('error', e => console.warn('Audio error:', e)));
+/* Audio error handling (moved here to ensure elements exist) */
+[bgm, sCoin, sJump, sCrash].forEach(a => {
+  if (a) a.addEventListener('error', e => console.warn('Audio error:', e.target.src, e));
+});
 
-/* Game state */
+
+/* Game variables */
 const W = cv.width, H = cv.height;
 const lanes = 3, laneW = W/lanes, groundY = H - 100;
-
 let score = 0, coins = 0, high = 0;
 let speed = 6;
 let running = false, gameOver = false, musicOn = true, paused = false;
 
+// Player properties for smoother movement and jump
 const player = {
   lane: 1,
-  x: laneX(1),
-  y: groundY,
+  x: null, y: groundY,
   w: 50, h: 50,
-  jumping: false,
-  vy: 0,
-  targetX: laneX(1)
+  jumping: false, vy: 0,
+  targetX: null,
+  jumpStrength: -18, // More powerful jump
+  gravity: 1.25 // Slightly stronger gravity
 };
+player.x = laneX(1);
+player.targetX = player.x;
 
-const obstacles = [];
-const coinItems = [];
+const obstacles = [], coinItems = [];
 let tObs = 0, tCoin = 0;
 
-/* Irys instance (new API) */
+/* Uploader state */
 let irys = null;
+let uploaderAddress = null;
+let walletBalanceEth = 0; // New: Connected wallet balance in ETH
+let isWalletConnected = false; // New: Wallet connection status
+let providerInitialized = false; // To track if ethers provider is ready
 
 /* Helpers */
-function laneX(l){ return l*laneW + laneW/2 - 25; }
+function laneX(l){ return (l * laneW) + laneW/2 - 25; }
 function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function aabb(a,b){ return (a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y); }
-function setHUD(){ hud.textContent = `Score: ${score} | Coins: ${coins} | High: ${high}`; }
+function aabb(a,b){ return (a.x < b.x+b.w && a.x+a.h > b.x && a.y < b.y+b.h && a.y+a.h > b.y); }
+function setHUD(){ hud.textContent = `SCORE: ${score} | COINS: ${coins} | HIGH: ${high}`; }
+
+/**
+ * Updates the wallet information and game status message displayed in the UI.
+ * @param {string} statusMessage - The message to display in the startStatus area.
+ */
+function updateWalletUI(statusMessage) {
+  startStatus.textContent = statusMessage;
+  if (uploaderAddress && walletBalanceEth !== null) {
+    walletInfo.innerHTML = `Wallet: ${uploaderAddress.slice(0, 6)}...${uploaderAddress.slice(-4)}<br>Balance: ${walletBalanceEth.toFixed(4)} ETH`;
+  } else {
+    walletInfo.innerHTML = `Wallet: Not Connected<br>Balance: N/A`;
+  }
+  
+  // Also manage play button state based on connection and balance
+  if (isWalletConnected && walletBalanceEth >= GAME_ENTRY_FEE_ETH) {
+    startBtn.style.display = 'inline-block';
+    muteStartBtn.style.display = 'inline-block';
+    startBtn.disabled = false;
+    muteStartBtn.disabled = false;
+  } else {
+    startBtn.style.display = 'none';
+    muteStartBtn.style.display = 'none';
+  }
+}
 
 /* Spawning */
+// Added variety to obstacle and coin spawn rates
 function spawnObstacle(){
   const lane = rand(0, lanes-1);
-  const s = rand(46,64);
+  const s = rand(46,64); // Size variance
   obstacles.push({ lane, x: laneX(lane), y: -s-10, w: s, h: s });
 }
 function spawnCoin(){
@@ -158,122 +374,165 @@ function spawnCoin(){
 
 /* Reset */
 function resetGame(){
-  score=0; coins=0; speed=6; running=true; gameOver=false; paused=false;
+  score=0; coins=0; speed=6;
+  running=true; gameOver=false; paused=false;
   obstacles.length=0; coinItems.length=0;
   tObs=0; tCoin=0;
-  player.lane=1; player.x=laneX(1); player.y=groundY; player.jumping=false; player.vy=0; player.targetX=player.x;
+  player.lane=1;
+  player.x=laneX(1); player.y=groundY;
+  player.jumping=false; player.vy=0;
+  player.targetX=player.x;
   goOverlay.style.display='none';
   startOverlay.style.display='none';
   if (musicOn) { bgm.play().catch(()=>{}); }
   setHUD();
 }
 
-/* Update */
+/* Update/draw - CORE GAME LOOP */
 function update(){
   if (!running || paused) return;
 
   score++;
-  if (score % 500 === 0) speed++;
+  if (score % 500 === 0) speed+=0.5; // Smoother speed increase
 
-  // smooth lane switch
+  // Player movement
   player.x += (player.targetX - player.x) * 0.22;
+  if (Math.abs(player.targetX - player.x) < 0.5) player.x = player.targetX; // Snap to target
 
-  // jump physics
+  // Jumping physics
   if (player.jumping){
     player.y += player.vy;
-    player.vy += 1.15;
-    if (player.y >= groundY){ player.y=groundY; player.jumping=false; }
+    player.vy += player.gravity; // Apply gravity
+    if (player.y >= groundY){
+      player.y=groundY;
+      player.jumping=false;
+      player.vy=0; // Reset vertical velocity
+    }
   }
 
-  // move
+  // Obstacle & Coin movement
   obstacles.forEach(o => o.y += speed * (1 + score/22000));
   coinItems.forEach(c => { c.y += speed; c.spin += 12; });
 
-  // spawn
-  if (++tObs  > Math.max(34, 64 - Math.floor(score/1800))) { spawnObstacle(); tObs=0; }
-  if (++tCoin > 96) { spawnCoin(); tCoin=0; }
+  // Spawning logic
+  if (++tObs  > Math.max(30, 60 - Math.floor(score/1500))) { spawnObstacle(); tObs=0; } // Faster obstacle spawn
+  if (++tCoin > 90) { spawnCoin(); tCoin=0; } // Faster coin spawn
 
-  // collisions
+  // Collision Detection (Obstacles)
   for (let i=obstacles.length-1;i>=0;i--){
     const o = obstacles[i];
     if (aabb(o, player)){
       sCrash.play();
-      running = false; gameOver = true; paused = false;
+      running = false;
+      gameOver = true;
+      paused = false;
       if (score > high) high = score;
       setTimeout(showGameOver, 140);
       break;
     }
-    if (o.y > H+80) obstacles.splice(i,1);
+    if (o.y > H+80) obstacles.splice(i,1); // Remove off-screen
   }
 
+  // Collision Detection (Coins)
   for (let i=coinItems.length-1;i>=0;i--){
     const c = coinItems[i];
-    if (aabb(c, player)){ coins++; sCoin.play(); coinItems.splice(i,1); }
-    else if (c.y>H+60) coinItems.splice(i,1);
+    if (aabb(c, player)){
+      coins++;
+      sCoin.play();
+      coinItems.splice(i,1); // Collect coin
+    } else if (c.y > H+60) {
+      coinItems.splice(i,1); // Remove off-screen
+    }
   }
-
   setHUD();
 }
 
-/* Draw */
 function draw(){
   ctx.clearRect(0,0,W,H);
 
-  // lanes
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  // Road lanes (more distinct)
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 2; // Thicker lines
   for (let i=1;i<lanes;i++){
-    ctx.beginPath(); ctx.moveTo(i*laneW,0); ctx.lineTo(i*laneW,H); ctx.stroke();
-  }
-
-  // speed lines
-  ctx.strokeStyle = "rgba(0,255,255,0.05)";
-  for (let i=0;i<8;i++){
     ctx.beginPath();
-    const x = ((i/8)*W + ((score*0.25)%26)); ctx.moveTo(x,0); ctx.lineTo(x+4,H); ctx.stroke();
+    ctx.moveTo(i*laneW,0);
+    ctx.lineTo(i*laneW,H);
+    ctx.stroke();
   }
 
-  // coins
+  // Speed lines (more dynamic)
+  ctx.strokeStyle = "rgba(0,255,255,0.1)";
+  ctx.lineWidth = 3; // Thicker speed lines
+  for (let i=0;i<10;i++){ // More speed lines
+    ctx.beginPath();
+    const x = ((i/10)*W + (score*0.25)%30); // Faster movement
+    ctx.moveTo(x,0);
+    ctx.lineTo(x+5,H); // Longer lines
+    ctx.stroke();
+  }
+
+  // Coins (more visually appealing)
   for (const c of coinItems){
-    ctx.save(); ctx.translate(c.x+14, c.y+14); ctx.rotate((c.spin||0)*Math.PI/180);
-    ctx.fillStyle = "rgba(255,213,74,1)";
-    ctx.beginPath(); ctx.arc(0,0,13,0,Math.PI*2); ctx.fill();
+    ctx.save();
+    ctx.translate(c.x+14, c.y+14);
+    ctx.rotate((c.spin||0)*Math.PI/180);
+    ctx.fillStyle = varColor('--gold');
+    ctx.beginPath();
+    ctx.arc(0,0,13,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = varColor('--accent-2'); // Blue border for coins
+    ctx.lineWidth = 2;
+    ctx.stroke();
     ctx.restore();
   }
 
-  // obstacles
-  ctx.fillStyle = "rgba(255,90,90,0.95)";
+  // Obstacles (clearer)
+  ctx.fillStyle = varColor('--danger');
   for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
 
-  // player
+  // Player (more vibrant)
   ctx.save();
   const px = player.x+25, py = player.y+25;
-  ctx.shadowColor = "rgba(0,255,170,0.6)";
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = "rgba(123,255,123,1)";
-  ctx.beginPath(); ctx.arc(px, py, 25, 0, Math.PI*2); ctx.fill();
+  ctx.shadowColor = varColor('--accent-glow');
+  ctx.shadowBlur = 25; // More intense glow
+  ctx.fillStyle = varColor('--accent');
+  ctx.beginPath();
+  ctx.arc(px, py, 25, 0, Math.PI*2);
+  ctx.fill();
   ctx.restore();
 
-  // paused veil
+  // Pause overlay
   if (paused && !gameOver){
-    ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = "#cfe"; ctx.font = "bold 20px system-ui"; ctx.fillText("Paused", W/2-36, H/2);
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = varColor('--accent');
+    ctx.font = "bold 2.5em 'Press Start 2P'"; /* Pixelated font for PAUSED */
+    ctx.textAlign = 'center';
+    ctx.fillText("PAUSED", W/2, H/2);
+    ctx.textAlign = 'left'; // Reset
   }
 }
+
+// Helper to get CSS variable color
+function varColor(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 
 /* Loop */
 function loop(){ update(); draw(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
-/* Controls: keyboard */
+/* Controls */
 document.addEventListener('keydown', e=>{
   if (gameOver) return;
   if (e.key === "ArrowLeft" && player.lane>0){ player.lane--; player.targetX = laneX(player.lane); }
   if (e.key === "ArrowRight" && player.lane<lanes-1){ player.lane++; player.targetX = laneX(player.lane); }
-  if (e.key === "ArrowUp" && !player.jumping){ player.jumping=true; player.vy=-15; sJump.play(); }
+  if (e.key === "ArrowUp" && !player.jumping){ player.jumping=true; player.vy=player.jumpStrength; sJump.play(); }
   if (e.key === "p" || e.key === "P"){ togglePause(); }
 });
 
-/* Controls: swipe */
+// Touch controls with better threshold
 let sx=0, sy=0;
 cv.addEventListener('touchstart', e=>{
   const t=e.touches[0], r=cv.getBoundingClientRect();
@@ -284,138 +543,500 @@ cv.addEventListener('touchend', e=>{
   const t=e.changedTouches[0], r=cv.getBoundingClientRect();
   const ex=t.clientX-r.left, ey=t.clientY-r.top;
   const dx=ex-sx, dy=ey-sy;
-  if (Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>40){
-    if (dx>0 && player.lane<lanes-1){ player.lane++; player.targetX=laneX(player.lane); }
-    if (dx<0 && player.lane>0){ player.lane--; player.targetX=laneX(player.lane); }
-  }else if(dy<-40 && !player.jumping){
-    player.jumping=true; player.vy=-15; sJump.play();
+
+  const swipeThreshold = 50; // Pixels for a recognized swipe
+  const jumpThreshold = -40; // Pixels upwards for a jump
+
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > swipeThreshold){
+    // Horizontal swipe
+    if (dx > 0 && player.lane < lanes - 1){ player.lane++; player.targetX = laneX(player.lane); }
+    if (dx < 0 && player.lane > 0){ player.lane--; player.targetX = laneX(player.lane); }
+  } else if (dy < jumpThreshold && !player.jumping){
+    // Upward swipe (jump)
+    player.jumping=true; player.vy=player.jumpStrength; sJump.play();
   }
 },{passive:true});
 
-/* UI: music + pause */
-musicBtn.addEventListener('click', ()=>{
-  musicOn = !musicOn;
-  if (musicOn){ bgm.play().catch(()=>{}); musicBtn.textContent="Pause Music"; }
-  else { bgm.pause(); musicBtn.textContent="Play Music"; }
-});
+/* UI */
+musicBtn.addEventListener('click', ()=>{ musicOn = !musicOn; if (musicOn){ bgm.play().catch(()=>{}); musicBtn.textContent="Pause Music"; } else { bgm.pause(); musicBtn.textContent="Play Music"; } });
 pauseBtn.addEventListener('click', togglePause);
 function togglePause(){ if (gameOver) return; paused = !paused; }
 
-/* Start buttons — ensure Irys first */
-startBtn.addEventListener('click', async ()=>{
-  await ensureIrys();
-  musicOn=true;
-  bgm.play().catch(()=>{});
-  resetGame();
-});
-muteStartBtn.addEventListener('click', async ()=>{
-  await ensureIrys();
-  musicOn=false;
-  bgm.pause();
-  resetGame();
-});
+/* Start handlers (non-blocking) */
+// Modified: Now calls startGameWithPayment
+startBtn.addEventListener('click', () => startGameWithPayment(true));
+muteStartBtn.addEventListener('click', () => startGameWithPayment(false));
 retryBtn.addEventListener('click', ()=>{ resetGame(); });
+uploadBtn.addEventListener('click', ()=>{
+  txInfo.textContent = "Uploading to Irys Devnet…";
+  uploadBtn.disabled = true; // Prevents multiple uploads
+  uploadScore({score, coins});
+});
 
-/* Irys: create instance (web uploader, Devnet) */
-async function ensureIrys(){
-  try{
-    if (irys) return irys;
-
-    if (!window.ethereum) {
-      startStatus.innerHTML = "No wallet found. Install MetaMask or another EVM wallet.";
-      throw new Error("No injected wallet");
-    }
-
-    startStatus.textContent = "Requesting wallet access…";
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-
-    // Any working Sepolia RPC is fine for Devnet; customize if desired.
-    const RPC_URL = "https://rpc.sepolia.org";
-
-    startStatus.textContent = "Connecting to Irys Devnet…";
-    irys = await WebUploader(WebEthereum)
-      .withProvider(EthereumEthersv5(provider))
-      .withRpc(RPC_URL)
-      .devnet();
-
-    startStatus.textContent = "Irys ready ✓ — scores will upload on Game Over.";
-    return irys;
-  }catch(err){
-    console.error("Irys init error:", err);
-    startStatus.textContent = "Irys init failed: " + (err.message||String(err)) + ". You can still play; upload may fail.";
-    irys = null;
-    return null;
-  }
-}
-
-/* Game over + upload (auto-fund if needed) */
-function showGameOver(){
-  goOverlay.style.display='flex';
-  goTitle.textContent = "Game Over";
-  goSub.textContent = `Score: ${score} | Coins: ${coins}`;
-
-  // Always save locally too (fallback)
-  const localScores = JSON.parse(localStorage.getItem('runner-scores') || '[]');
-  localScores.push({score, coins, date: new Date().toISOString()});
-  localStorage.setItem('runner-scores', JSON.stringify(localScores));
-
-  if (irys) {
-    txInfo.textContent = "Uploading to Irys Devnet…";
-    uploadScore({score, coins})
-      .then(msg => { txInfo.innerHTML = msg; })
-      .catch(err => { txInfo.textContent = "Upload failed: " + (err.message || String(err)); });
+// New: Connect Wallet Button Handler
+connectWalletBtn.addEventListener('click', async () => {
+  if (isWalletConnected) {
+    // If already connected, maybe offer to disconnect or just refresh status
+    updateWalletUI("Wallet already connected. Refreshing status...");
+    await connectWallet(); // Re-fetch balance etc.
   } else {
-    txInfo.textContent = "Irys uploader not ready. Score was not uploaded.";
+    updateWalletUI("Connecting wallet...");
+    await connectWallet();
+  }
+});
+
+/* New: Function to connect wallet and fetch balance */
+async function connectWallet() {
+  await ensureModules(); // Make sure ethers is loaded
+  if (!ethers) {
+    updateWalletUI("Wallet modules not loaded. Please try again.");
+    return false;
+  }
+
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      if (accounts.length === 0) {
+        throw new Error("No accounts found.");
+      }
+      uploaderAddress = accounts[0];
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+      providerInitialized = true;
+
+      // Listen for account changes
+      window.ethereum.on('accountsChanged', (newAccounts) => {
+        if (newAccounts.length > 0) {
+          uploaderAddress = newAccounts[0];
+          updateWalletInfo();
+        } else {
+          disconnectWallet();
+        }
+      });
+
+      // Listen for network changes
+      window.ethereum.on('chainChanged', (chainId) => {
+        if (chainId !== '0xaa36a7') { // Sepolia chain ID
+          updateWalletUI("Please connect to Sepolia Testnet.");
+          disconnectWallet();
+        } else {
+          updateWalletInfo();
+        }
+      });
+      
+      await updateWalletInfo();
+      isWalletConnected = true;
+      connectWalletBtn.textContent = "Wallet Connected";
+      connectWalletBtn.disabled = true; // Disable if connected
+      // Play buttons visibility handled by updateWalletUI
+      updateWalletUI(`Wallet ${uploaderAddress.slice(0, 6)}... connected. Balance: ${walletBalanceEth.toFixed(4)} ETH.`);
+      
+      // Check if on Sepolia
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainId !== '0xaa36a7') { // Sepolia chain ID
+        updateWalletUI("Please switch to Sepolia Testnet in your wallet.");
+        startBtn.disabled = true;
+        muteStartBtn.disabled = true;
+      } else {
+        startBtn.disabled = false;
+        muteStartBtn.disabled = false;
+      }
+
+      return true;
+
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+      updateWalletUI("Wallet connection failed. " + (error.message || "Please ensure MetaMask is installed and unlocked."));
+      isWalletConnected = false;
+      connectWalletBtn.disabled = false;
+      // Play buttons visibility handled by updateWalletUI
+      updateWalletUI("Wallet connection failed. Please try again."); // Clear previous status
+      return false;
+    }
+  } else {
+    updateWalletUI("MetaMask or compatible wallet not detected. Please install one.");
+    isWalletConnected = false;
+    connectWalletBtn.disabled = false;
+    // Play buttons visibility handled by updateWalletUI
+    updateWalletUI("MetaMask or compatible wallet not detected. Install one to connect."); // Clear previous status
+    return false;
   }
 }
 
+/* New: Function to update wallet info display */
+async function updateWalletInfo() {
+  if (provider && uploaderAddress) {
+    const balanceWei = await provider.getBalance(uploaderAddress);
+    walletBalanceEth = parseFloat(ethers.utils.formatEther(balanceWei));
+    
+    if (walletBalanceEth < GAME_ENTRY_FEE_ETH) {
+      updateWalletUI(`Insufficient Sepolia ETH (need ${GAME_ENTRY_FEE_ETH} ETH). Get some from a faucet!`);
+      startBtn.disabled = true;
+      muteStartBtn.disabled = true;
+    } else {
+      updateWalletUI(`Ready to play! Cost: ${GAME_ENTRY_FEE_ETH} ETH per game.`);
+      startBtn.disabled = false;
+      muteStartBtn.disabled = false;
+    }
+  } else {
+    updateWalletUI("Connect your wallet to play.");
+    startBtn.disabled = true;
+    muteStartBtn.disabled = true;
+  }
+}
+
+/* New: Disconnect wallet logic */
+function disconnectWallet() {
+  uploaderAddress = null;
+  walletBalanceEth = 0;
+  isWalletConnected = false;
+  providerInitialized = false;
+  provider = null;
+  signer = null;
+  updateWalletUI("Wallet disconnected. Connect to play.");
+  connectWalletBtn.textContent = "Connect Wallet";
+  connectWalletBtn.disabled = false;
+}
+
+
+/* New: Pay-to-play function */
+async function startGameWithPayment(playMusic) {
+  if (!isWalletConnected) {
+    updateWalletUI("Please connect your wallet first.");
+    return;
+  }
+  if (!providerInitialized) {
+    updateWalletUI("Wallet provider not initialized. Please try connecting again.");
+    await connectWallet(); // Attempt to reconnect
+    return;
+  }
+  if (walletBalanceEth < GAME_ENTRY_FEE_ETH) {
+    updateWalletUI(`Insufficient Sepolia ETH. You need ${GAME_ENTRY_FEE_ETH} ETH to play.`);
+    return;
+  }
+
+  updateWalletUI(`Initiating payment of ${GAME_ENTRY_FEE_FEE_ETH} ETH to play...`);
+  startBtn.disabled = true;
+  muteStartBtn.disabled = true;
+
+  try {
+    const transactionParameters = {
+      to: "0x0000000000000000000000000000000000000000", // A dummy zero address for burning/sending to an unspendable address on testnet
+      value: ethers.utils.parseEther(GAME_ENTRY_FEE_ETH.toString())
+    };
+
+    const tx = await signer.sendTransaction(transactionParameters);
+    updateWalletUI(`Transaction sent! Waiting for confirmation... (TX: ${tx.hash.slice(0, 6)}...)`);
+    await tx.wait(); // Wait for transaction to be mined
+
+    updateWalletUI("Payment confirmed! Starting game...");
+    musicOn = playMusic;
+    resetGame();
+    await updateWalletInfo(); // Refresh balance after payment
+
+  } catch (error) {
+    console.error("Payment failed:", error);
+    updateWalletUI("Payment failed. Please try again or check your wallet.");
+    startBtn.disabled = false;
+    muteStartBtn.disabled = false;
+    await updateWalletInfo(); // Refresh balance
+  }
+}
+
+
+/* Lazy-load uploader modules */
+async function ensureModules(){
+  if (modulesLoaded) return true;
+  try {
+    updateWalletUI("Loading uploader modules…");
+    const [{ WebUploader: wU }, { WebEthereum: wE }, { EthereumEthersv5: eE }, { ethers: e}] = await Promise.all([
+      import("https://cdn.jsdelivr.net/npm/@irys/web-upload@2.0.0-beta.1/+esm"),
+      import("https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum@2.0.0-beta.1/+esm"),
+      import("https://cdn.jsdelivr.net/npm/@irys/web-upload-ethereum-ethers-v5@2.0.0-beta.1/+esm"),
+      import("https://cdn.jsdelivr.net/npm/ethers@5.7.2/+esm")
+    ]);
+    WebUploader = wU;
+    WebEthereum = wE;
+    EthereumEthersv5 = eE;
+    ethers = e;
+    modulesLoaded = true;
+    updateWalletUI("Uploader modules loaded.");
+    return true;
+  } catch (err) {
+    console.warn("Module load failed:", err);
+    modulesLoaded = false;
+    updateWalletUI("Uploader modules failed to load; uploads & wallet features skipped.");
+    return false;
+  }
+}
+
+/* Lazy init uploader (wallet preferred, else TEST_PRIVATE_KEY) */
+async function getIrysLazy(){
+  if (irys) return irys;
+  const ok = await ensureModules();
+  if (!ok) return null;
+
+  // Use connected wallet if available
+  if (isWalletConnected && provider && signer) {
+    try {
+      updateWalletUI("Connecting to Irys (wallet - Devnet)…");
+      irys = await WebUploader(WebEthereum).withProvider(EthereumEthersv5(signer)).withRpc(FALLBACK_RPC).devnet();
+      updateWalletUI("Irys ready (wallet - Devnet)");
+      return irys;
+    } catch(e){
+      console.warn("Irys with wallet init failed:", e);
+      updateWalletUI("Irys init with wallet failed; uploads might be affected.");
+      return null;
+    }
+  }
+
+  // Fallback to TEST_PRIVATE_KEY if no wallet connected (or failed) AND key is provided
+  if (TEST_PRIVATE_KEY && TEST_PRIVATE_KEY.trim().length > 0){
+    try {
+      updateWalletUI("Initializing uploader with test key (Devnet)…");
+      const testProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
+      const wallet = new ethers.Wallet(TEST_PRIVATE_KEY.trim(), testProvider);
+      irys = await WebUploader(WebEthereum).withProvider(EthereumEthersv5(wallet)).withRpc(FALLBACK_RPC).devnet();
+      uploaderAddress = wallet.address; // Set uploader address for fallback
+      updateWalletUI("Irys ready (test key - Devnet)");
+      return irys;
+    } catch(e){
+      console.warn("Test-key init failed:", e);
+      updateWalletUI("Test-key init failed; uploads skipped.");
+      return null;
+    }
+  }
+
+  updateWalletUI("No wallet or test key available; uploads disabled.");
+  return null;
+}
+
+/* Helper to wait for a few seconds */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/* Upload on game over (lazy init + fund retry) */
 async function uploadScore({score, coins}){
-  const payload = {
-    game: "runner-irys-devnet",
-    player: "guest_" + Math.floor(Math.random()*90000+10000),
-    score,
-    coins,
-    ts: Date.now()
-  };
+  const playerAddress = uploaderAddress || ("guest_"+Math.floor(Math.random()*90000+10000));
+  const payload = { game: "runner-irys-devnet", player: playerAddress, score, coins, ts: Date.now() };
   const data = JSON.stringify(payload);
   const dataBytes = new TextEncoder().encode(data);
 
-  const tryUpload = async () => {
-    const receipt = await irys.upload(data, {
-      tags: [
-        { name:"App-Name", value:"Runner-Irys-Devnet" },
-        { name:"Content-Type", value:"application/json" }
-      ]
-    });
-    return receipt;
-  };
+  const MAX_RETRIES = 3;
+  let attempts = 0;
 
-  try {
-    const receipt = await tryUpload();
-    const url = `https://gateway.irys.xyz/${receipt.id}`;
-    return `Uploaded ✅ <a class="link" href="${url}" target="_blank" rel="noopener">${receipt.id}</a>`;
-  } catch (err) {
-    const msg = (err?.message || "").toLowerCase();
-    if (msg.includes("fund") || msg.includes("balance") || msg.includes("insufficient")) {
-      try {
-        const price = await irys.getPrice(dataBytes.length);
-        const buffered = Math.ceil(Number(price) * 1.1);
-        txInfo.textContent = "Funding devnet node…";
-        await irys.fund(buffered);
-        const receipt2 = await tryUpload();
-        const url2 = `https://gateway.irys.xyz/${receipt2.id}`;
-        return `Uploaded ✅ <a class="link" href="${url2}" target="_blank" rel="noopener">${receipt2.id}</a>`;
-      } catch (fundErr) {
-        console.error("Funding/upload retry failed:", fundErr);
-        throw fundErr;
+  while(attempts < MAX_RETRIES) {
+    try {
+      const client = await getIrysLazy();
+      if (!client) throw new Error("Uploader not available");
+
+      txInfo.textContent = `Uploading to Irys Devnet (Attempt ${attempts + 1}/${MAX_RETRIES})…`;
+      const receipt = await client.upload(data, {
+        tags: [{ name:"App-Name", value:"Runner-Irys-Devnet" }, { name:"Content-Type", value:"application/json" }]
+      });
+
+      lastUploadedTxId = receipt.id;
+      txInfo.innerHTML = `Uploaded ✅ <a class="link" href="https://gateway.irys.xyz/${receipt.id}" target="_blank" rel="noopener">${receipt.id}</a>`;
+      await fetchLeaderboard();
+      uploadBtn.disabled = false;
+      return receipt;
+
+    } catch (err) {
+      const msg = (err?.message || "").toLowerCase();
+      console.error(`Upload attempt ${attempts + 1} failed:`, err);
+      uploadBtn.disabled = false;
+
+      // Only try to fund if a wallet is connected, otherwise it's a critical error for the hardcoded key
+      if (isWalletConnected && (msg.includes("fund") || msg.includes("balance") || msg.includes("insufficient"))) {
+        try {
+          const client = irys;
+          if (!client) throw new Error("No client for funding");
+          const price = await client.getPrice(dataBytes.length);
+          const buffered = Math.ceil(Number(price) * 1.1);
+
+          txInfo.textContent = `Requesting devnet funds (Attempt ${attempts + 1}/${MAX_RETRIES})…`;
+          await client.fund(buffered);
+
+          txInfo.textContent = "Funds sent! Retrying upload in 3 seconds...";
+          await sleep(3000); // Shorter delay for quicker retries
+          attempts++;
+          continue; // Continue to the next loop iteration to retry the upload
+        } catch (fundErr) {
+          console.error("Funding retry failed:", fundErr);
+          txInfo.textContent = `Funding failed: ${fundErr.message || 'unknown error'} — score saved locally.`;
+          saveLocalScore({score, coins});
+          fetchLocalLeaderboard();
+          uploadBtn.disabled = false;
+          return; // Exit the function on critical funding failure
+        }
+      } else {
+        // For all other errors, or if not connected, exit the loop
+        txInfo.textContent = `Upload failed: ${err.message || 'unknown error'}`;
+        saveLocalScore({score, coins});
+        fetchLocalLeaderboard();
+        uploadBtn.disabled = false;
+        return;
       }
     }
-    console.error("Upload error:", err);
-    throw err;
+  }
+
+  // If all attempts fail
+  txInfo.textContent = `All ${MAX_RETRIES} upload attempts failed. Score saved locally.`;
+  saveLocalScore({score, coins});
+  fetchLocalLeaderboard();
+  uploadBtn.disabled = false;
+}
+
+/* Leaderboard fetching */
+async function fetchLeaderboard(){
+  leaderboardEl.innerHTML = "<strong>🏆 Leaderboard</strong><br><div style='margin-top:8px;color:#9fb;'>Loading…</div>";
+  try {
+    const explorerUrl = "https://devnet.irys.xyz/txs?tags=App-Name:Runner-Irys-Devnet&limit=12&order=desc";
+    const res = await fetch(explorerUrl);
+    if (!res.ok) throw new Error("Explorer query failed: " + res.status);
+    const txs = await res.json();
+    const entries = [];
+    for (const t of txs) {
+      try {
+        const resp = await fetch(`https://gateway.irys.xyz/${t.id}`);
+        if (!resp.ok) continue;
+        const json = await resp.json();
+        // Ensure valid score and player, default if missing
+        const scoreVal = Number(json.score) || 0;
+        const playerVal = json.player || 'anonymous';
+        entries.push({ score: scoreVal, ts: json.ts||json.timestamp||Date.now(), player: playerVal, txid: t.id });
+      } catch(e){ console.warn("Failed to fetch tx payload", t.id, e); }
+    }
+    if (entries.length === 0) throw new Error("No remote entries parsed");
+    entries.sort((a,b)=> b.score - a.score);
+    renderLeaderboard(entries);
+  } catch (err) {
+    console.warn("Remote leaderboard failed, using local", err);
+    fetchLocalLeaderboard();
   }
 }
+
+function renderLeaderboard(entries){
+  leaderboardEl.innerHTML = "<strong>🏆 LEADERBOARD</strong>"; // Uppercase for retro feel
+  if (!entries || entries.length === 0){ leaderboardEl.innerHTML += "<div style='margin-top:8px;color:#9fb;'>No scores yet.</div>"; return; }
+
+  // Use a list for better structure
+  const ul = document.createElement('ul');
+  ul.style.listStyle = 'none';
+  ul.style.padding = '0';
+  ul.style.marginTop = '10px';
+
+  entries.slice(0,10).forEach((e,i)=>{
+    const time = new Date(Number(e.ts)).toLocaleString();
+    const pShort = (e.player && e.player.length > 15) ? (e.player.slice(0,12)+'...') : e.player; // Slightly longer player display
+
+    const li = document.createElement('li');    
+    li.classList.add('score-item');    
+    const isMine = (lastUploadedTxId && e.txid === lastUploadedTxId) || (uploaderAddress && e.player && e.player.toLowerCase() === uploaderAddress.toLowerCase());    
+    if (isMine) li.classList.add('highlight');    
+    
+    li.innerHTML = `#${i+1} — <strong>${e.score}</strong> pts — ${pShort} <span style="font-size:0.8em; opacity:0.8;">(${time})</span> ${isMine?'<em style="margin-left:6px">← YOU</em>':''}`;    
+    ul.appendChild(li);
+
+  });
+  leaderboardEl.appendChild(ul);
+}
+
+/* Local leaderboard */
+function saveLocalScore({score, coins}){
+  const ls = JSON.parse(localStorage.getItem('runner-scores') || '[]');
+  ls.push({ score, coins, date: new Date().toISOString(), player: uploaderAddress || "local" });
+  localStorage.setItem('runner-scores', JSON.stringify(ls));
+}
+function fetchLocalLeaderboard(){
+  const ls = JSON.parse(localStorage.getItem('runner-scores') || '[]');
+  const entries = ls.map(s => ({ score:s.score, ts:s.date, player:s.player, txid:null })).sort((a,b)=> b.score - a.score);
+  renderLeaderboard(entries);
+}
+
+/* Game over handling */
+function showGameOver(){
+  goOverlay.style.display='flex';
+  goTitle.textContent = "GAME OVER!"; // More emphatic
+  goSub.textContent = `SCORE: ${score} | COINS: ${coins}`;
+  saveLocalScore({score, coins});
+  txInfo.textContent = "Hit 'Upload Score' to post your results.";
+  uploadBtn.disabled = false; // Re-enable upload button for new attempt
+}
+
+/* Auto-refresh LB every 15s */
+setInterval(fetchLeaderboard, 15000);
+fetchLocalLeaderboard();
+
+/* Expose debug */
+window._runnerDebug = { getIrysLazy, fetchLeaderboard, fetchLocalLeaderboard };
+
+/* Keyboard helper */
+document.addEventListener('keydown', e=>{ if (e.code==='KeyR') resetGame(); });
+
+// Initial status check on load
+document.addEventListener('DOMContentLoaded', async () => {
+    // Attempt to connect wallet if window.ethereum is available
+    if (window.ethereum) {
+      // First, ensure modules are loaded so ethers is available
+      await ensureModules();
+      // Then try to connect silently (if already authorized)
+      if (ethers) { // Check if ethers loaded successfully
+        try {
+          const accounts = await window.ethereum.request({ method: "eth_accounts" });
+          if (accounts.length > 0) {
+            uploaderAddress = accounts[0];
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+            providerInitialized = true;
+            isWalletConnected = true;
+
+            // Set up listeners for account/chain changes
+            window.ethereum.on('accountsChanged', (newAccounts) => {
+              if (newAccounts.length > 0) {
+                uploaderAddress = newAccounts[0];
+                updateWalletInfo();
+              } else {
+                disconnectWallet();
+              }
+            });
+            window.ethereum.on('chainChanged', (chainId) => {
+              if (chainId !== '0xaa36a7') { // Sepolia chain ID
+                updateWalletUI("Please connect to Sepolia Testnet.");
+                disconnectWallet();
+              } else {
+                updateWalletInfo();
+              }
+            });
+
+            await updateWalletInfo();
+            connectWalletBtn.textContent = "Wallet Connected";
+            connectWalletBtn.disabled = true;
+            // Play buttons visibility handled by updateWalletUI
+            updateWalletUI(`Wallet ${uploaderAddress.slice(0, 6)}... connected. Balance: ${walletBalanceEth.toFixed(4)} ETH.`);
+
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            if (chainId !== '0xaa36a7') { // Sepolia chain ID
+              updateWalletUI("Please switch to Sepolia Testnet in your wallet.");
+              startBtn.disabled = true;
+              muteStartBtn.disabled = true;
+            } else {
+              startBtn.disabled = false;
+              muteStartBtn.disabled = false;
+            }
+          } else {
+            updateWalletUI("Click 'Connect Wallet' to begin.");
+          }
+        } catch (error) {
+          console.warn("Silent wallet connection failed:", error);
+          updateWalletUI("Click 'Connect Wallet' to begin.");
+        }
+      }
+    } else {
+      updateWalletUI("MetaMask or compatible wallet not detected. Install one to connect.");
+    }
+});
 </script>
 </body>
 </html>
